@@ -121,6 +121,7 @@ class DataTablePostProcessor
 
         $dataTable = $this->applyGenericFilters($dataTable);
         $dataTable = $this->applyArchiveStateFilter($dataTable);
+        $this->resetProcessedMetricsForSummaryRows($dataTable);
         $this->applyComputeProcessedMetrics($dataTable);
         $dataTable = $this->applyComparison($dataTable);
 
@@ -526,6 +527,35 @@ class DataTablePostProcessor
                 }
             }
         }
+    }
+
+    /**
+     * After generic filters run (which may include Truncate creating a summary row), any
+     * ProcessedMetric columns on the summary row will contain summed values rather than
+     * correctly re-derived ones (e.g. avg_X = sum of averages instead of sum_X / nb_hits_X).
+     * Delete those columns from the summary row and clear the computed flag so that
+     * applyComputeProcessedMetrics can recompute them from their raw dependencies.
+     */
+    private function resetProcessedMetricsForSummaryRows(DataTableInterface $dataTable): void
+    {
+        $report = $this->report;
+        $dataTable->filter(function (DataTable $table) use ($report) {
+            $summaryRow = $table->getRowFromId(DataTable::ID_SUMMARY_ROW);
+            if (!$summaryRow) {
+                return;
+            }
+
+            $processedMetrics = Report::getProcessedMetricsForTable($table, $report);
+            if (empty($processedMetrics)) {
+                return;
+            }
+
+            foreach ($processedMetrics as $name => $metric) {
+                $summaryRow->deleteColumn($name);
+            }
+
+            $table->deleteMetadata(self::PROCESSED_METRICS_COMPUTED_FLAG);
+        });
     }
 
     public function applyComputeProcessedMetrics(DataTableInterface $dataTable)
