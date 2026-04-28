@@ -406,6 +406,10 @@ class API extends \Piwik\Plugin\API
      */
     private function checkPattern($pattern, $matchAttribute): string
     {
+        if ($matchAttribute !== 'manually' && trim($pattern) === '') {
+            throw new \Exception(Piwik::translate('General_ValidatorErrorEmptyValue'));
+        }
+
         if (
             in_array($matchAttribute, GoalManager::$NUMERIC_MATCH_ATTRIBUTES)
             && !is_numeric($pattern)
