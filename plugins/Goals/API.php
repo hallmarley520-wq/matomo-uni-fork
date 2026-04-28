@@ -220,10 +220,10 @@ class API extends \Piwik\Plugin\API
 
         $patternType = Common::unsanitizeInputValue($patternType);
 
+        $this->checkPatternIsValid($patternType, $pattern, $matchAttribute);
         $name = $this->checkName($name);
         $pattern = $this->checkPattern($pattern, $matchAttribute);
         $patternType = $this->checkPatternType($patternType, $matchAttribute);
-        $this->checkPatternIsValid($patternType, $pattern, $matchAttribute);
         $description = $this->checkDescription($description);
 
         $revenue = Common::forceDotAsSeparatorForDecimalPoint((float)$revenue);
